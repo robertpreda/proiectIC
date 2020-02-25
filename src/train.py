@@ -29,22 +29,15 @@ print('Done!')
 # print('Done!')
 
 criterion = nn.CrossEntropyLoss().cuda()
-optimizer = optim.Adam(model.parameters(), lr=0.0001, weight_decay=0.001)
+optimizer = optim.Adam(model.parameters(), lr=0.0001, momentum=0.9)
 
 
 ###### let's start training, bois #####
 
-random_transforms = [transforms.ToPILImage(), 
-                        transforms.ColorJitter(brightness=0.5, contrast=0.5, saturation=0.5, hue=0.5),
-                        transforms.Grayscale(num_output_channels=3),
-                        transforms.RandomCrop(size=224)
-]
-
 print("Preparing data...")
 transform = transforms.Compose([
         transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-        # transforms.RandomApply(random_transforms, p=0.5)
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     ]
 )
 dataset = EthnicityDataset('../data/dataset.csv', transform=transform)
@@ -53,8 +46,6 @@ train_set, validation_set = torch.utils.data.random_split(dataset, [965, 242])
 train_data_loader = torch.utils.data.DataLoader(train_set, 
             batch_size=1, 
             shuffle=True)
-
-test_data_loader = torch.utils.data.DataLoader(validation_set, batch_size=1, shuffle=True)
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 model.to(device)
 print("Done!")
@@ -68,8 +59,7 @@ try:
         for i, batch in enumerate(train_data_loader):
             imgs = batch['image']
             labels = batch['label']
-            print(f"Img type: {imgs.type} and shape: {imgs.shape}")
-            print(f"Shape of labels: {labels.shape}")
+
             imgs = imgs.to(device)
             labels = (torch.Tensor(labels.float())).cuda()
             # print(labels)
@@ -84,8 +74,7 @@ try:
             # print(f"Outputs: {outputs.view(1,4)}")
             # print(f'Labels: {labels}')
             # exit()
-            loss = criterion(outputs.view(-1,4), labels.long())
-            # loss = criterion(outputs, torch.max(labels, 1)[1])
+            loss = criterion(outputs.view(1,4), labels.long())
             loss.backward()
             optimizer.step()
             
@@ -96,35 +85,16 @@ try:
 
         torch.save(model, f'../models/squeezenet__1_1__4_classes_ epoch_{e}.pth')
         print(f"Saved model at epoch {e}")
-# except Exception as e :
-#     torch.save(model, 'squeezenet__1_1__4_classes_shit_happenend.pth')
-#     print(e)
+except Exception as e :
+    torch.save(model, 'squeezenet__1_1__4_classes_shit_happenend.pth')
+    print(e)
 except KeyboardInterrupt:
     torch.save(model, '../models/squeezenet__1_1__4_classes_shit_happenend.pth')
     exit()
 
 print("Done training!")
-print("Starting testing....")
-
-correct = 0
-
-with torch.no_grad():
-    for i, batch in tqdm(enumerate(test_data_loader)):
-        img = batch['image']
-        labels = batch['label']
-
-        img = img.to(device)
-        labels = (torch.Tensor(labels.float())).cuda()
-
-        outputs = model(img)
-        outputs = outputs.numpy()
-        labels = labels.cpu()
-
-        if np.argmax(labels.numpy()) == np.argmax(outputs):
-            correct += 1
 
 
-print(f"Test accuracy is: {correct / 242}")
     
 
 
