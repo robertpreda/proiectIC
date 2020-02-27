@@ -5,7 +5,8 @@ import cv2
 import PIL.Image, PIL.ImageTk
 import time
 import pyttsx3
-from threading import Thread, enumerate
+from threading import Thread
+
 
 class App:
     def __init__(self, window, window_title, video_source=0):
@@ -23,9 +24,13 @@ class App:
         self.delay = 15
         self.running = ""
 
+        self.listbox = tkinter.Listbox(self.window)
+        self.listbox.pack()
+        self.listbox.place(bordermode=tkinter.OUTSIDE, height=500, width=200, x=15, y=100)
+
         self.canvas = tkinter.Canvas(self.window, width=1024, height=768)
         self.canvas.pack()
-        self.canvas.place(bordermode=tkinter.OUTSIDE, x=200, y=15)
+        self.canvas.place(bordermode=tkinter.OUTSIDE, x=250, y=15)
 
         self.graph_canvas = tkinter.Canvas(self.window, width=400, height=500)
         self.race_info = [("#fffb6d", "Asian"), ("#402D06", "Black"), ("#c39752", "Latino"), ("#fef7d6", "White")]
@@ -78,7 +83,6 @@ class App:
     def what_am_i(self):
         self.talk_thread = Thread(target=self.talk)
         print("You a nigga!")
-        #self.draw_graph()
         try:
             self.talk_thread.start()
         except RuntimeError:
@@ -117,7 +121,6 @@ class App:
             self.draw_graph()
 
             self.talk_thread.start()
-        print(enumerate())
         return
 
     def capture_video(self):
@@ -140,7 +143,7 @@ class App:
 
     def show_graph(self):
         self.graph_canvas.pack()
-        self.graph_canvas.place(bordermode=tkinter.OUTSIDE, x=1300, y=100)
+        self.graph_canvas.place(bordermode=tkinter.OUTSIDE, x=1350, y=100)
 
     def talk(self):
         try:
