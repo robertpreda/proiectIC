@@ -12,7 +12,7 @@ class CustomSqueezenet(nn.Module):
         self.classifier = nn.Sequential(
             nn.Dropout(p=0.75),
             final_conv,
-            nn.Softmax(),
+            nn.ReLU(),
             nn.AdaptiveAvgPool2d((1, 1))
         )
 
@@ -20,6 +20,14 @@ class CustomSqueezenet(nn.Module):
         x = self.backbone(x)
         x = self.classifier(x)
         return x
+
+
+def get_model(model_path):
+
+    model = torch.load(model_path)
+    model.require_grad = False
+
+    return model
 
 # class RacistNet(nn.Module):
 #     def __init__(self, classes=4):
