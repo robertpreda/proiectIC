@@ -5,6 +5,7 @@ import cv2
 import PIL.Image, PIL.ImageTk
 import time
 import pyttsx3
+import os
 from threading import Thread
 
 
@@ -26,7 +27,13 @@ class App:
 
         self.listbox = tkinter.Listbox(self.window)
         self.listbox.pack()
-        self.listbox.place(bordermode=tkinter.OUTSIDE, height=500, width=200, x=15, y=100)
+        self.listbox.place(bordermode=tkinter.OUTSIDE, height=300, width=200, x=15, y=100)
+        self.filelist = []
+        self.get_filelist()
+
+        self.load_img_list_btn = tkinter.Button(self.window, text='Load Selected Image', command=self.load_selected_image)
+        self.load_img_list_btn.pack()
+        self.load_img_list_btn.place(bordermode=tkinter.OUTSIDE, height=25, width=150, x=15, y=425)
 
         self.canvas = tkinter.Canvas(self.window, width=1024, height=768)
         self.canvas.pack()
@@ -94,6 +101,7 @@ class App:
 
         if ret:
             cv2.imwrite("../Snapshots/frame-" + time.strftime("%d-%m-%Y-%H-%M-%S") + ".jpg", cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
+            self.get_filelist()
 
     def update(self):
         # Get a frame from the video source
@@ -106,10 +114,14 @@ class App:
         if self.running == "Video":
             self.window.after(self.delay, self.update)
 
-    def open_img(self):
+    def load_selected_image(self):
+        x = self.listbox.curselection()[0]
+        self.open_img(f"../Snapshots/{self.listbox.get(x)}")
+
+    def open_img(self, filename):
         self.talk_thread = Thread(target=self.talk)
         self.running = "Img"
-        ret, photo = self.img_obj.get_img()
+        ret, photo = self.img_obj.get_img(filename)
 
         if ret:
             self.hide_btn(self.btn_snapshot)
@@ -132,6 +144,12 @@ class App:
         # After it is called once, the update method will be automatically called every delay milliseconds
         self.update()
         return
+
+    def get_filelist(self):
+        self.filelist = os.listdir("../Snapshots")
+        for file in self.filelist:
+            self.listbox.insert(tkinter.END,file)
+        #self.listbox.pack()
 
     def hide_btn(self, btn):
         btn.pack_forget()
@@ -186,11 +204,14 @@ class MyLoadImg:
     def __init__(self):
         self.filename = ""
 
-    def get_img(self):
-        self.filename = filedialog.askopenfilename(title='open')
-        if self.filename == "":
-            return False, None
-
+    def get_img(self, filename):
+        if filename == "":
+            self.filename = filedialog.askopenfilename(title='open')
+            if self.filename == "":
+                return False, None
+        else:
+            self.filename = filename
+        
         cv_img = cv2.imread(self.filename)
         resized_cv_img = cv2.resize(cv_img, (1024, 768))
         rgb_cv_img = cv2.cvtColor(resized_cv_img, cv2.COLOR_BGR2RGB)
