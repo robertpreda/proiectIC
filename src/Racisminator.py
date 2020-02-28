@@ -43,18 +43,16 @@ class App:
         self.video_source = video_source
         self.delay = 15
         self.running = ""
+        self.data = []
 
         self.listbox = tkinter.Listbox(self.window)
-        self.listbox.pack()
-        self.listbox.place(bordermode=tkinter.OUTSIDE, height=300, width=200, x=15, y=100)
+        self.pack_place_obj(self.listbox, 300, 200, 15, 100)
         self.filelist = []
         self.get_filelist()
 
-        self.load_img_list_btn = tkinter.Button(self.window, text='Load Selected Image',
-                                                command=self.load_selected_image)
-        self.load_img_list_btn.pack()
-        self.load_img_list_btn.place(bordermode=tkinter.OUTSIDE, height=25, width=150, x=15, y=425)
-
+        self.load_img_list_btn = tkinter.Button(self.window, text='Load Selected Image', command=self.load_selected_image)
+        self.pack_place_obj(self.load_img_list_btn, 25, 150, 15, 425)
+        
         self.canvas = tkinter.Canvas(self.window, width=1024, height=768)
         self.canvas.pack()
         self.canvas.place(bordermode=tkinter.OUTSIDE, x=250, y=15)
@@ -63,13 +61,11 @@ class App:
         self.race_info = [("#fffb6d", "Asian", "Corona"), ("#402D06", "Black", "Negro"), ("#c39752", "Latino", "Beaner"), ("#fef7d6", "White", "Gringo")]
 
         self.load_img_btn = tkinter.Button(self.window, text='Load Image', command=self.open_img)
-        self.load_img_btn.pack()
-        self.load_img_btn.place(bordermode=tkinter.OUTSIDE, height=25, width=100, x=15, y=15)
-
+        self.pack_place_obj(self.load_img_btn, 25, 100, 15, 15)
+        
         self.load_video_btn = tkinter.Button(self.window, text='Capture Video', command=self.capture_video)
-        self.load_video_btn.pack()
-        self.load_video_btn.place(bordermode=tkinter.OUTSIDE, height=25, width=100, x=15, y=45)
-
+        self.pack_place_obj(self.load_video_btn, 25, 100, 15, 45)
+        
         self.what_am_i_btn = tkinter.Button(self.window, text='What am I?', command=self.what_am_i)
         self.hide_btn(self.what_am_i_btn)
 
@@ -85,8 +81,6 @@ class App:
 
     def draw_graph(self):
         self.graph_canvas.delete("all")
-        #self.data = np.random.uniform(low=0, high=1, size=(4,))
-
         # The variables below size the bar graph
         x_width = 40  # The width of the x-axis
         x_gap = 0  # The gap between left canvas edge and y axi
@@ -107,11 +101,11 @@ class App:
         self.show_graph()
 
     def what_am_i(self):
-        self.talk_thread = Thread(target=self.talk)
+        talk_thread = Thread(target=self.talk)
         try:
-            self.talk_thread.start()
+            talk_thread.start()
         except RuntimeError:
-            self.talk_thread.join()
+            talk_thread.join()
 
     def snapshot(self):
         # Get a frame from the video source
@@ -128,9 +122,7 @@ class App:
         if ret:
             self.photo = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(frame))
             self.canvas.create_image(0, 0, image=self.photo, anchor=tkinter.NW)
-
             results = run_model(frame)
-
             self.data = F.softmax(results, dim=1).cpu().numpy()
             self.draw_graph()
 
@@ -142,7 +134,7 @@ class App:
         self.open_img(f"../Snapshots/{self.listbox.get(x)}")
 
     def open_img(self, filename=""):
-        self.talk_thread = Thread(target=self.talk)
+        talk_thread = Thread(target=self.talk)
         self.running = "Img"
         ret, photo, results = self.img_obj.get_img(filename)
 
@@ -157,7 +149,7 @@ class App:
             self.canvas.create_image(0, 0, image=self.photo, anchor=tkinter.NW)
             self.draw_graph()
 
-            self.talk_thread.start()
+            talk_thread.start()
         return
 
     def capture_video(self):
@@ -170,12 +162,27 @@ class App:
         self.update()
         return
 
+    def talk(self):
+        try:
+            race = self.get_race()
+            self.engine.say(f"You are a {self.race_info[race][2]}!")
+            self.engine.runAndWait()
+        except RuntimeError:
+            return
+
+    def get_race(self):
+        race_indic = []
+        for i in range(4):
+            race_indic.append(self.data[0][i][0][0])
+        race = np.argmax(race_indic)
+        return race
+
     def get_filelist(self):
         self.listbox.delete(0, tkinter.END)
         self.filelist = os.listdir("../Snapshots")
         for file in self.filelist:
             self.listbox.insert(tkinter.END, file)
-
+    
     def hide_btn(self, btn):
         btn.pack_forget()
         btn.place_forget()
@@ -183,21 +190,14 @@ class App:
     def show_btn(self, btn, height, width, x, y):
         btn.pack(anchor=tkinter.CENTER, expand=True)
         btn.place(bordermode=tkinter.OUTSIDE, height=height, width=width, x=x, y=y)
-
+    
+    def pack_place_obj(self, obj, height, width, x, y):
+        obj.pack()
+        obj.place(bordermode=tkinter.OUTSIDE, height=height, width=width, x=x, y=y)
+    
     def show_graph(self):
         self.graph_canvas.pack()
         self.graph_canvas.place(bordermode=tkinter.OUTSIDE, x=1350, y=150)
-
-    def talk(self):
-        race_indic = []
-        try:
-            for i in range(4):
-                race_indic.append(self.data[0][i][0][0])
-            race = np.argmax(race_indic)
-            self.engine.say(f"You are a {self.race_info[race][2]}!")
-            self.engine.runAndWait()
-        except RuntimeError:
-            return
 
 
 class MyVideoCapture:
@@ -217,11 +217,11 @@ class MyVideoCapture:
             resized_cv_frame = cv2.resize(frame, (1024, 768))
             if ret:
                 # Return a boolean success flag and the current frame converted to BGR
-                return (ret, cv2.cvtColor(resized_cv_frame, cv2.COLOR_BGR2RGB))
+                return ret, cv2.cvtColor(resized_cv_frame, cv2.COLOR_BGR2RGB)
             else:
-                return (ret, None)
+                return ret, None
         else:
-            return (False, None)
+            return False, None
 
     # Release the video source when the object is destroyed
     def __del__(self):
