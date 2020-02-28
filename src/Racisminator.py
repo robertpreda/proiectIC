@@ -17,8 +17,16 @@ transform = transforms.Compose([
             transforms.ToTensor(),
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
         ])
-device = device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 model = get_model("../models/squeezenet__1_1__4_classes_ epoch_3__1582729000.pth")
+
+
+def run_model(cv_img):
+    cv_model_resized = cv2.resize(cv_img, (550, 550))
+    with torch.no_grad():
+        tensor = model(transform(cv_model_resized).view(-1, 3, 550, 550).float().to(device))
+    return tensor
+
 
 class App:
     def __init__(self, window, window_title, video_source=0):
@@ -121,9 +129,7 @@ class App:
             self.photo = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(frame))
             self.canvas.create_image(0, 0, image=self.photo, anchor=tkinter.NW)
 
-            cv_model_resized = cv2.resize(frame, (550, 550))
-            with torch.no_grad():
-                results = model(transform(cv_model_resized).view(-1, 3, 550, 550).float().to(device))
+            results = run_model(frame)
 
             self.data = F.softmax(results, dim=1).cpu().numpy()
             self.draw_graph()
@@ -238,9 +244,7 @@ class MyLoadImg:
         cv_img = cv2.imread(self.filename)
         resized_cv_img = cv2.resize(cv_img, (1024, 768))
 
-        cv_model_resized = cv2.resize(cv_img, (550, 550))
-        with torch.no_grad():
-            tensor = model(transform(cv_model_resized).view(-1, 3, 550, 550).float().to(device))
+        tensor = run_model(cv_img)
 
         rgb_cv_img = cv2.cvtColor(resized_cv_img, cv2.COLOR_BGR2RGB)
 
