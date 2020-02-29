@@ -44,27 +44,31 @@ class App:
         self.delay = 15
         self.running = ""
         self.data = []
+        self.dirname = "../Snapshots"
 
         self.listbox = tkinter.Listbox(self.window)
-        self.pack_place_obj(self.listbox, 300, 200, 15, 100)
+        self.pack_place_obj(self.listbox, height=300, width=200, x=15, y=50)
         self.filelist = []
         self.get_filelist()
 
-        self.load_img_list_btn = tkinter.Button(self.window, text='Load Selected Image', command=self.load_selected_image)
-        self.pack_place_obj(self.load_img_list_btn, 25, 150, 15, 425)
-        
+        self.load_img_list_btn = tkinter.Button(self.window, text='Load Selected Image',
+                                                command=self.load_selected_image)
+        self.pack_place_obj(self.load_img_list_btn, height=25, width=150, x=15, y=375)
+
+        self.load_directory_list_btn = tkinter.Button(self.window, text='Change dir', command=self.load_directory)
+        self.pack_place_obj(self.load_directory_list_btn, height=25, width=150, x=15, y=15)
+
         self.canvas = tkinter.Canvas(self.window, width=1024, height=768)
-        self.canvas.pack()
-        self.canvas.place(bordermode=tkinter.OUTSIDE, x=250, y=15)
+        self.pack_place_obj(self.canvas, x=250, y=50)
 
         self.graph_canvas = tkinter.Canvas(self.window, width=400, height=700)
         self.race_info = [("#fffb6d", "Asian", "Corona"), ("#402D06", "Black", "Negro"), ("#c39752", "Latino", "Beaner"), ("#fef7d6", "White", "Gringo")]
 
         self.load_img_btn = tkinter.Button(self.window, text='Load Image', command=self.open_img)
-        self.pack_place_obj(self.load_img_btn, 25, 100, 15, 15)
-        
+        self.pack_place_obj(self.load_img_btn, height=25, width=100, x=632, y=15)
+
         self.load_video_btn = tkinter.Button(self.window, text='Capture Video', command=self.capture_video)
-        self.pack_place_obj(self.load_video_btn, 25, 100, 15, 45)
+        self.pack_place_obj(self.load_video_btn, height=25, width=100, x=800, y=15)
         
         self.what_am_i_btn = tkinter.Button(self.window, text='What am I?', command=self.what_am_i)
         self.hide_btn(self.what_am_i_btn)
@@ -130,20 +134,23 @@ class App:
             self.window.after(self.delay, self.update)
 
     def load_selected_image(self):
-        x = self.listbox.curselection()[0]
-        self.open_img(f"../Snapshots/{self.listbox.get(x)}")
+        try:
+            self.running = "Img"
+            x = self.listbox.curselection()[0]
+            self.open_img(f"{self.dirname}/{self.listbox.get(x)}")
+        except IndexError:
+            return
 
     def open_img(self, filename=""):
-        talk_thread = Thread(target=self.talk)
         self.running = "Img"
+        talk_thread = Thread(target=self.talk)
         ret, photo, results = self.img_obj.get_img(filename)
-
         self.data = F.softmax(results, dim=1).cpu().numpy()
 
         if ret:
+            self.canvas.delete("all")
             self.hide_btn(self.btn_snapshot)
             self.hide_btn(self.what_am_i_btn)
-            self.canvas.delete("all")
 
             self.photo = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(photo))
             self.canvas.create_image(0, 0, image=self.photo, anchor=tkinter.NW)
@@ -154,8 +161,8 @@ class App:
 
     def capture_video(self):
         self.running = "Video"
-        self.show_btn(self.btn_snapshot, 25, 100, 712, 800)
-        self.show_btn(self.what_am_i_btn, 25, 100, 600, 800)
+        self.show_btn(self.btn_snapshot, height=25, width=100, x=712, y=830)
+        self.show_btn(self.what_am_i_btn, height=25, width=100, x=600, y=830)
         self.canvas.delete("all")
 
         # After it is called once, the update method will be automatically called every delay milliseconds
@@ -179,10 +186,14 @@ class App:
 
     def get_filelist(self):
         self.listbox.delete(0, tkinter.END)
-        self.filelist = os.listdir("../Snapshots")
+        self.filelist = os.listdir(self.dirname)
         for file in self.filelist:
             self.listbox.insert(tkinter.END, file)
-    
+
+    def load_directory(self):
+        self.dirname = filedialog.askdirectory()
+        self.get_filelist()
+
     def hide_btn(self, btn):
         btn.pack_forget()
         btn.place_forget()
@@ -191,9 +202,11 @@ class App:
         btn.pack(anchor=tkinter.CENTER, expand=True)
         btn.place(bordermode=tkinter.OUTSIDE, height=height, width=width, x=x, y=y)
     
-    def pack_place_obj(self, obj, height, width, x, y):
-        obj.pack()
-        obj.place(bordermode=tkinter.OUTSIDE, height=height, width=width, x=x, y=y)
+    def pack_place_obj(self, obj,  x, y, height=-1, width=-1):
+        if height == -1 and width == -1:
+            obj.place(bordermode=tkinter.OUTSIDE, x=x, y=y)
+        else:
+            obj.place(bordermode=tkinter.OUTSIDE, height=height, width=width, x=x, y=y)
     
     def show_graph(self):
         self.graph_canvas.pack()
