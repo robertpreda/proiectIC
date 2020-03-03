@@ -29,6 +29,11 @@ def get_model(model_path):
 
     return model
 
+
+# def get_predictions(model, input):
+#     with torch.no_grad():
+
+
 # class RacistNet(nn.Module):
 #     def __init__(self, classes=4):
 #         super(RacistNet, self).__init__()
