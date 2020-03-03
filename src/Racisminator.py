@@ -1,12 +1,31 @@
 import tkinter
-import numpy as np
-from tkinter import filedialog
 import cv2
 import PIL.Image, PIL.ImageTk
 import time
 import pyttsx3
 import os
+import torch
+import torch.nn.functional as F
+import numpy as np
+from src.model_backbones import get_model
+from tkinter import filedialog
 from threading import Thread
+from torchvision import transforms
+
+transform = transforms.Compose([
+            transforms.ToPILImage(),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+        ])
+device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+model = get_model("../models/squeezenet__1_1__4_classes_ epoch_3__1582729000.pth")
+
+
+def run_model(cv_img):
+    cv_model_resized = cv2.resize(cv_img, (550, 550))
+    with torch.no_grad():
+        tensor = model(transform(cv_model_resized).view(-1, 3, 550, 550).float().to(device))
+    return tensor
 
 
 class App:
@@ -24,32 +43,33 @@ class App:
         self.video_source = video_source
         self.delay = 15
         self.running = ""
+        self.data = []
+        self.dirname = "../Snapshots"
 
         self.listbox = tkinter.Listbox(self.window)
-        self.listbox.pack()
-        self.listbox.place(bordermode=tkinter.OUTSIDE, height=300, width=200, x=15, y=100)
+        self.pack_place_obj(self.listbox, height=300, width=200, x=15, y=50)
         self.filelist = []
         self.get_filelist()
 
-        self.load_img_list_btn = tkinter.Button(self.window, text='Load Selected Image', command=self.load_selected_image)
-        self.load_img_list_btn.pack()
-        self.load_img_list_btn.place(bordermode=tkinter.OUTSIDE, height=25, width=150, x=15, y=425)
+        self.load_img_list_btn = tkinter.Button(self.window, text='Load Selected Image',
+                                                command=self.load_selected_image)
+        self.pack_place_obj(self.load_img_list_btn, height=25, width=150, x=15, y=375)
+
+        self.load_directory_list_btn = tkinter.Button(self.window, text='Change dir', command=self.load_directory)
+        self.pack_place_obj(self.load_directory_list_btn, height=25, width=150, x=15, y=15)
 
         self.canvas = tkinter.Canvas(self.window, width=1024, height=768)
-        self.canvas.pack()
-        self.canvas.place(bordermode=tkinter.OUTSIDE, x=250, y=15)
+        self.pack_place_obj(self.canvas, x=250, y=50)
 
-        self.graph_canvas = tkinter.Canvas(self.window, width=400, height=500)
-        self.race_info = [("#fffb6d", "Asian"), ("#402D06", "Black"), ("#c39752", "Latino"), ("#fef7d6", "White")]
+        self.graph_canvas = tkinter.Canvas(self.window, width=400, height=700)
+        self.race_info = [("#fffb6d", "Asian", "Corona"), ("#402D06", "Black", "Negro"), ("#c39752", "Latino", "Beaner"), ("#fef7d6", "White", "Gringo")]
 
         self.load_img_btn = tkinter.Button(self.window, text='Load Image', command=self.open_img)
-        self.load_img_btn.pack()
-        self.load_img_btn.place(bordermode=tkinter.OUTSIDE, height=25, width=100, x=15, y=15)
+        self.pack_place_obj(self.load_img_btn, height=25, width=100, x=632, y=15)
 
         self.load_video_btn = tkinter.Button(self.window, text='Capture Video', command=self.capture_video)
-        self.load_video_btn.pack()
-        self.load_video_btn.place(bordermode=tkinter.OUTSIDE, height=25, width=100, x=15, y=45)
-
+        self.pack_place_obj(self.load_video_btn, height=25, width=100, x=800, y=15)
+        
         self.what_am_i_btn = tkinter.Button(self.window, text='What am I?', command=self.what_am_i)
         self.hide_btn(self.what_am_i_btn)
 
@@ -65,91 +85,114 @@ class App:
 
     def draw_graph(self):
         self.graph_canvas.delete("all")
-        self.data = np.random.uniform(low=0, high=1, size=(4,))
-
         # The variables below size the bar graph
         x_width = 40  # The width of the x-axis
         x_gap = 0  # The gap between left canvas edge and y axi
-        for i in range(len(self.data)):
+        for i in range(4):
             # Bottom left coordinate
-            x0 = (i+1) * x_width + x_gap
+            x0 = (i + 1) * x_width + x_gap
             # Bottom right coordinates
-            x1 = (i+2) * x_width + x_gap
+            x1 = (i + 2) * x_width + x_gap
             # Top coordinates
-            y = 400 - 400 * self.data[i] + 15
-
+            y = 400 - 400 * self.data[0][i][0][0]
             # Draw the bar
             self.graph_canvas.create_rectangle(x0, 400, x1, y, fill=self.race_info[i][0])
 
             # Put the y value above the bar
-            self.graph_canvas.create_text(x0 + 2, y-5, anchor=tkinter.SW, text=f"{round(self.data[i] * 100, 2)}%")
+            self.graph_canvas.create_text(x0 + 2, y - 5, anchor=tkinter.SW, text=f"{round(self.data[0][i][0][0] * 100, 2)}%")
             self.graph_canvas.create_text(x0 + 2, 415, anchor=tkinter.SW, text=self.race_info[i][1])
             x_gap = x_gap + 20
         self.show_graph()
 
     def what_am_i(self):
-        self.talk_thread = Thread(target=self.talk)
-        print("You a nigga!")
+        talk_thread = Thread(target=self.talk)
         try:
-            self.talk_thread.start()
+            talk_thread.start()
         except RuntimeError:
-            self.talk_thread.join()
+            talk_thread.join()
 
     def snapshot(self):
         # Get a frame from the video source
         ret, frame = self.vid.get_frame()
 
         if ret:
-            cv2.imwrite("../Snapshots/frame-" + time.strftime("%d-%m-%Y-%H-%M-%S") + ".jpg", cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
+            cv2.imwrite("../Snapshots/frame-" + time.strftime("%d-%m-%Y-%H-%M-%S") + ".jpg",
+                        cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
             self.get_filelist()
 
     def update(self):
         # Get a frame from the video source
         ret, frame = self.vid.get_frame()
-        self.draw_graph()
-
         if ret:
             self.photo = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(frame))
             self.canvas.create_image(0, 0, image=self.photo, anchor=tkinter.NW)
+            results = run_model(frame)
+            self.data = F.softmax(results, dim=1).cpu().numpy()
+            self.draw_graph()
+
         if self.running == "Video":
             self.window.after(self.delay, self.update)
 
     def load_selected_image(self):
-        x = self.listbox.curselection()[0]
-        self.open_img(f"../Snapshots/{self.listbox.get(x)}")
+        try:
+            self.running = "Img"
+            x = self.listbox.curselection()[0]
+            self.open_img(f"{self.dirname}/{self.listbox.get(x)}")
+        except IndexError:
+            return
 
-    def open_img(self, filename):
-        self.talk_thread = Thread(target=self.talk)
+    def open_img(self, filename=""):
         self.running = "Img"
-        ret, photo = self.img_obj.get_img(filename)
+        talk_thread = Thread(target=self.talk)
+        ret, photo, results = self.img_obj.get_img(filename)
+        self.data = F.softmax(results, dim=1).cpu().numpy()
 
         if ret:
+            self.canvas.delete("all")
             self.hide_btn(self.btn_snapshot)
             self.hide_btn(self.what_am_i_btn)
-            self.canvas.delete("all")
 
             self.photo = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(photo))
             self.canvas.create_image(0, 0, image=self.photo, anchor=tkinter.NW)
             self.draw_graph()
 
-            self.talk_thread.start()
+            talk_thread.start()
         return
 
     def capture_video(self):
         self.running = "Video"
-        self.show_btn(self.btn_snapshot, 25, 100, 712, 800)
-        self.show_btn(self.what_am_i_btn, 25, 100, 600, 800)
+        self.show_btn(self.btn_snapshot, height=25, width=100, x=712, y=830)
+        self.show_btn(self.what_am_i_btn, height=25, width=100, x=600, y=830)
         self.canvas.delete("all")
 
         # After it is called once, the update method will be automatically called every delay milliseconds
         self.update()
         return
 
+    def talk(self):
+        try:
+            race = self.get_race()
+            self.engine.say(f"You are a {self.race_info[race][2]}!")
+            self.engine.runAndWait()
+        except RuntimeError:
+            return
+
+    def get_race(self):
+        race_indic = []
+        for i in range(4):
+            race_indic.append(self.data[0][i][0][0])
+        race = np.argmax(race_indic)
+        return race
+
     def get_filelist(self):
-        self.filelist = os.listdir("../Snapshots")
+        self.listbox.delete(0, tkinter.END)
+        self.filelist = os.listdir(self.dirname)
         for file in self.filelist:
-            self.listbox.insert(tkinter.END,file)
-        #self.listbox.pack()
+            self.listbox.insert(tkinter.END, file)
+
+    def load_directory(self):
+        self.dirname = filedialog.askdirectory()
+        self.get_filelist()
 
     def hide_btn(self, btn):
         btn.pack_forget()
@@ -158,17 +201,16 @@ class App:
     def show_btn(self, btn, height, width, x, y):
         btn.pack(anchor=tkinter.CENTER, expand=True)
         btn.place(bordermode=tkinter.OUTSIDE, height=height, width=width, x=x, y=y)
-
+    
+    def pack_place_obj(self, obj,  x, y, height=-1, width=-1):
+        if height == -1 and width == -1:
+            obj.place(bordermode=tkinter.OUTSIDE, x=x, y=y)
+        else:
+            obj.place(bordermode=tkinter.OUTSIDE, height=height, width=width, x=x, y=y)
+    
     def show_graph(self):
         self.graph_canvas.pack()
-        self.graph_canvas.place(bordermode=tkinter.OUTSIDE, x=1350, y=100)
-
-    def talk(self):
-        try:
-            self.engine.say("You are a race!")
-            self.engine.runAndWait()
-        except RuntimeError:
-            return
+        self.graph_canvas.place(bordermode=tkinter.OUTSIDE, x=1350, y=150)
 
 
 class MyVideoCapture:
@@ -188,11 +230,11 @@ class MyVideoCapture:
             resized_cv_frame = cv2.resize(frame, (1024, 768))
             if ret:
                 # Return a boolean success flag and the current frame converted to BGR
-                return (ret, cv2.cvtColor(resized_cv_frame, cv2.COLOR_BGR2RGB))
+                return ret, cv2.cvtColor(resized_cv_frame, cv2.COLOR_BGR2RGB)
             else:
-                return (ret, None)
+                return ret, None
         else:
-            return (False, None)
+            return False, None
 
     # Release the video source when the object is destroyed
     def __del__(self):
@@ -208,15 +250,18 @@ class MyLoadImg:
         if filename == "":
             self.filename = filedialog.askopenfilename(title='open')
             if self.filename == "":
-                return False, None
+                return False, None, None
         else:
             self.filename = filename
-        
+
         cv_img = cv2.imread(self.filename)
         resized_cv_img = cv2.resize(cv_img, (1024, 768))
+
+        tensor = run_model(cv_img)
+
         rgb_cv_img = cv2.cvtColor(resized_cv_img, cv2.COLOR_BGR2RGB)
 
-        return True, rgb_cv_img
+        return True, rgb_cv_img, tensor
 
 
 # Create a window and pass it to the Application object
