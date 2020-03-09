@@ -22,8 +22,6 @@ transform = transforms.Compose([
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 model = get_model("../models/squeezenet__1_1__4_classes_ epoch_3__1582729000.pth")
 
-face_cascade = 'face_classifier.xml'
-classifier = cv2.CascadeClassifier(face_cascade)
 race_info = [("#fffb6d", "Asian", "Corona"), ("#402D06", "Black", "Negro"), ("#c39752", "Latino", "Beaner"), ("#fef7d6", "White", "Gringo")]
 
 
