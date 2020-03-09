@@ -274,7 +274,7 @@ def get_resultimg_and_overallrace(resized_cv_img):
     rects = get_boxes(resized_cv_img)
     out_softed_tensor = [[[[0]], [[0]], [[0]], [[0]]]]
     for x, y, w, h in rects:
-        aux_img = resized_cv_img[x:x+w, y:y + h]
+        aux_img = resized_cv_img[y:y+h, x:x + w]
 
         # Uncomment if you want to see each face before processing
         #cv2.imshow("image", aux_img)
