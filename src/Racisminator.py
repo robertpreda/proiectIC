@@ -285,8 +285,8 @@ def get_resultimg_and_overallrace(resized_cv_img):
         out_softed_tensor += tensor_soft
         index = np.argmax(tensor_soft)
 
-        cv2.rectangle(resized_cv_img, (x, y), (x + w, y + h), color=(0, 255, 0),  thickness=1)  # Draw Rectangle with the coordinates
-        cv2.putText(resized_cv_img, race_info[index][1] + " " + f"{round(tensor_soft[0][index][0][0] * 100, 2)}", (x, y), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), thickness=1)
+        cv2.rectangle(resized_cv_img, (x, y), (x + w, y + h), color=(0, 0, 0),  thickness=2)  # Draw Rectangle with the coordinates
+        cv2.putText(resized_cv_img, race_info[index][1] + " " + f"{round(tensor_soft[0][index][0][0] * 100, 2)}", (x, y), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), thickness=2)
     rgb_cv_img = cv2.cvtColor(resized_cv_img, cv2.COLOR_BGR2RGB)
     if len(rects) > 1:
         out_softed_tensor = out_softed_tensor / len(rects)
