@@ -5,19 +5,32 @@ import time
 import pyttsx3
 import os
 import torch
-from src.facial_landmarks import init_facial_landmarks_detector, detect_landmarks
+import torch.nn.functional as F
+import numpy as np
+from src.model_backbones import get_model
 from tkinter import filedialog
 from threading import Thread
 from torchvision import transforms
+from src.detect_faces import get_boxes
 
 transform = transforms.Compose([
-            transforms.ToPILImage(),
-            
-            transforms.ToTensor(),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-        ])
+    transforms.ToPILImage(),
+
+    transforms.ToTensor(),
+    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+])
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-init_facial_landmarks_detector()
+model = get_model("../models/squeezenet__1_1__4_classes_ epoch_3__1582729000.pth")
+
+race_info = [("#fffb6d", "Asian", "Corona"), ("#402D06", "Black", "Negro"), ("#c39752", "Latino", "Beaner"),
+             ("#fef7d6", "White", "Gringo")]
+
+
+def run_model(cv_img):
+    cv_model_resized = cv2.resize(cv_img, (550, 550))
+    with torch.no_grad():
+        tensor = model(transform(cv_model_resized).view(-1, 3, 550, 550).float().to(device))
+    return tensor
 
 
 class App:
@@ -55,6 +68,8 @@ class App:
         self.canvas = tkinter.Canvas(self.window, width=1024, height=768)
         self.pack_place_obj(self.canvas, x=250, y=50)
 
+        self.graph_canvas = tkinter.Canvas(self.window, width=400, height=700)
+
         self.load_img_btn = tkinter.Button(self.window, text='Load Image', command=self.open_img)
         self.pack_place_obj(self.load_img_btn, height=25, width=100, x=632, y=15)
 
@@ -73,6 +88,28 @@ class App:
         self.hide_btn(self.btn_snapshot)
 
         self.window.mainloop()
+
+    def draw_graph(self):
+        self.graph_canvas.delete("all")
+        # The variables below size the bar graph
+        x_width = 40  # The width of the x-axis
+        x_gap = 0  # The gap between left canvas edge and y axi
+        for i in range(4):
+            # Bottom left coordinate
+            x0 = (i + 1) * x_width + x_gap
+            # Bottom right coordinates
+            x1 = (i + 2) * x_width + x_gap
+            # Top coordinates
+            y = 400 - 400 * self.data[0][i][0][0]
+            # Draw the bar
+            self.graph_canvas.create_rectangle(x0, 400, x1, y, fill=race_info[i][0])
+
+            # Put the y value above the bar
+            self.graph_canvas.create_text(x0 + 2, y - 5, anchor=tkinter.SW,
+                                          text=f"{round(self.data[0][i][0][0] * 100, 2)}%")
+            self.graph_canvas.create_text(x0 + 2, 415, anchor=tkinter.SW, text=race_info[i][1])
+            x_gap = x_gap + 20
+        self.show_graph()
 
     def what_am_i(self):
         talk_thread = Thread(target=self.talk)
@@ -94,11 +131,17 @@ class App:
         # Get a frame from the video source
         ret, frame = self.vid.get_frame()
         if ret:
-            rgb_cv_image = detect_landmarks(frame)
+            resized_cv_img = cv2.resize(frame, (1024, 768))
+            results, rgb_cv_image = get_resultimg_and_overallrace(resized_cv_img)
 
             self.photo = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(rgb_cv_image))
             self.canvas.create_image(0, 0, image=self.photo, anchor=tkinter.NW)
 
+            # results = run_model(frame)
+            # self.data = F.softmax(results, dim=1).cpu().numpy()
+
+            self.data = results
+            # self.draw_graph()
         self._callback_id.set(self.window.after(self.delay, self.update))
 
     def load_selected_image(self):
@@ -112,7 +155,8 @@ class App:
     def open_img(self, filename=""):
         self.window.after_cancel(self._callback_id.get())
         talk_thread = Thread(target=self.talk)
-        ret, photo = self.img_obj.get_img(filename)
+        ret, photo, results = self.img_obj.get_img(filename)
+        self.data = results
 
         if ret:
             self.canvas.delete("all")
@@ -121,6 +165,7 @@ class App:
 
             self.photo = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(photo))
             self.canvas.create_image(0, 0, image=self.photo, anchor=tkinter.NW)
+            # self.draw_graph()
 
             talk_thread.start()
         return
@@ -136,10 +181,18 @@ class App:
 
     def talk(self):
         try:
-            self.engine.say("Ahahahaha")
+            race = self.get_race()
+            self.engine.say(f"You are a {race_info[race][2]}!")
             self.engine.runAndWait()
         except RuntimeError:
             return
+
+    def get_race(self):
+        race_indic = []
+        for i in range(4):
+            race_indic.append(self.data[0][i][0][0])
+        race = np.argmax(race_indic)
+        return race
 
     def get_filelist(self):
         self.listbox.delete(0, tkinter.END)
@@ -158,12 +211,16 @@ class App:
     def show_btn(self, btn, height, width, x, y):
         btn.pack(anchor=tkinter.CENTER, expand=True)
         btn.place(bordermode=tkinter.OUTSIDE, height=height, width=width, x=x, y=y)
-    
-    def pack_place_obj(self, obj,  x, y, height=-1, width=-1):
+
+    def pack_place_obj(self, obj, x, y, height=-1, width=-1):
         if height == -1 and width == -1:
             obj.place(bordermode=tkinter.OUTSIDE, x=x, y=y)
         else:
             obj.place(bordermode=tkinter.OUTSIDE, height=height, width=width, x=x, y=y)
+
+    def show_graph(self):
+        self.graph_canvas.pack()
+        self.graph_canvas.place(bordermode=tkinter.OUTSIDE, x=1350, y=150)
 
 
 class MyVideoCapture:
@@ -208,10 +265,35 @@ class MyLoadImg:
             self.filename = filename
 
         cv_img = cv2.imread(self.filename)
-        rgb_cv_img = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
-        img_resized = cv2.resize(rgb_cv_img, (1024, 768))
-        modif_img = detect_landmarks(img_resized)
-        return True, modif_img
+        resized_cv_img = cv2.resize(cv_img, (1024, 768))
+
+        out_softed_tensor, rgb_cv_img = get_resultimg_and_overallrace(resized_cv_img)
+        return True, rgb_cv_img, out_softed_tensor
+
+
+def get_resultimg_and_overallrace(resized_cv_img):
+    rects = get_boxes(resized_cv_img)
+    out_softed_tensor = [[[[0]], [[0]], [[0]], [[0]]]]
+    for x, y, w, h in rects:
+        aux_img = resized_cv_img[y:y + h, x:x + w]
+
+        # Uncomment if you want to see each face before processing
+        # cv2.imshow("image", aux_img)
+        # cv2.waitKey(0)
+        # cv2.destroyAllWindows()
+
+        #  tensor = run_model(aux_img)
+        #  tensor_soft = F.softmax(tensor, dim=1).cpu().numpy()
+        #  out_softed_tensor += tensor_soft
+        #  index = np.argmax(tensor_soft)
+
+        cv2.rectangle(resized_cv_img, (x, y), (x + w, y + h), color=(0, 0, 0),
+                      thickness=2)  # Draw Rectangle with the coordinates
+        #  cv2.putText(resized_cv_img, race_info[index][1] + " " + f"{round(tensor_soft[0][index][0][0] * 100, 2)}", (x, y), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), thickness=2)
+    rgb_cv_img = cv2.cvtColor(resized_cv_img, cv2.COLOR_BGR2RGB)
+    # if len(rects) > 1 and out_softed_tensor != []:
+    #    out_softed_tensor = out_softed_tensor / len(rects)
+    return out_softed_tensor, rgb_cv_img
 
 
 if __name__ == "__main__":
