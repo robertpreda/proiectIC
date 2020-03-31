@@ -10,4 +10,5 @@ For the Neural Network we used a detector using the dlib library.
  
 The dataset which we trained the NN on is the iBUG 300-W dataset: https://ibug.doc.ic.ac.uk/resources/facial-point-annotations/
 
-
+## AI
+* to be continued
