@@ -12,7 +12,6 @@ from torchvision import transforms
 
 transform = transforms.Compose([
             transforms.ToPILImage(),
-            
             transforms.ToTensor(),
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
         ])
@@ -173,7 +172,6 @@ class MyVideoCapture:
         if not self.vid.isOpened():
             raise ValueError("Unable to open video source", video_source)
 
-        # Get video source width and height
         self.width = self.vid.get(cv2.CAP_PROP_FRAME_WIDTH)
         self.height = self.vid.get(cv2.CAP_PROP_FRAME_HEIGHT)
 
@@ -182,14 +180,12 @@ class MyVideoCapture:
             ret, frame = self.vid.read()
             resized_cv_frame = cv2.resize(frame, (1024, 768))
             if ret:
-                # Return a boolean success flag and the current frame converted to BGR
                 return ret, cv2.cvtColor(resized_cv_frame, cv2.COLOR_BGR2RGB)
             else:
                 return ret, None
         else:
             return False, None
 
-    # Release the video source when the object is destroyed
     def __del__(self):
         if self.vid.isOpened():
             self.vid.release()
