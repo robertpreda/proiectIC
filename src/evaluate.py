@@ -12,8 +12,10 @@ engine = pyttsx3.init()
 engine.setProperty('rate', 100)
 engine.setProperty('volume', 0.7)
 
-MODEL_PATH = '../models/squeezenet__1_1__4_classes_ epoch_3__1582729000.pth'
-IMAGE_PATH = 'asian_cropped.jpg'
+# F:\Cursuri\AN 3\sem2\IC\Proiect\models\squeezenet__1_1__4_classes_epoch_3__1583795360_new_dataset.pth
+
+MODEL_PATH = '../models/squeezenet__1_1__4_classes_epoch_3__1583795360_new_dataset.pth'
+IMAGE_PATH = 'me.jpg'
 
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
@@ -34,16 +36,16 @@ img = cv2.resize(img_orig, (550, 550))
 
 transform = transforms.Compose([
     transforms.ToPILImage(),
-    transforms.Grayscale(num_output_channels=3),
+    # transforms.Grayscale(num_output_channels=3),
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 ])
 
-input_img = transform(img).view(-1, 3, img.shape[0], img.shape[1]).float().to(device)
+input_img = transform(img).view(1, 3, 550, 550).float().to(device)
 with torch.no_grad():
     
     results = model(input_img)
-    # print(results)
+
     res_sorted = np.sort(np.array(results.cpu().numpy()))
 
     res = np.argmax(results.cpu().detach().numpy())

@@ -7,21 +7,21 @@ import os
 import torch
 import torch.nn.functional as F
 import numpy as np
-from src.model_backbones import get_model
+from model_backbones import get_model
 from tkinter import filedialog
 from threading import Thread
 from torchvision import transforms
-from src.detect_faces import get_boxes
+from detect_faces import get_boxes
 
 
 transform = transforms.Compose([
             transforms.ToPILImage(),
-            
+            transforms.Grayscale(num_output_channels=3),
             transforms.ToTensor(),
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
         ])
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-model = get_model("../models/squeezenet__1_1__4_classes_ epoch_3__1582729000.pth")
+model = get_model("../models/squeezenet__1_1__4_classes_epoch_3__1583795360_new_dataset.pth")
 
 race_info = [("#fffb6d", "Asian", "Corona"), ("#402D06", "Black", "Negro"), ("#c39752", "Latino", "Beaner"), ("#fef7d6", "White", "Gringo")]
 
@@ -274,7 +274,7 @@ def get_resultimg_and_overallrace(resized_cv_img):
     rects = get_boxes(resized_cv_img)
     out_softed_tensor = [[[[0]], [[0]], [[0]], [[0]]]]
     for x, y, w, h in rects:
-        aux_img = resized_cv_img[x:x+w, y:y + h]
+        aux_img = resized_cv_img[y:y+h, x:x + w]
 
         # Uncomment if you want to see each face before processing
         #cv2.imshow("image", aux_img)

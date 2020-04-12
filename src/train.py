@@ -11,6 +11,8 @@ from model_backbones import CustomSqueezenet
 from DataSet import *
 from tqdm import tqdm
 
+device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+
 
 def accuracy(output, labels):
     # print(f"Outputs: {output}")
@@ -37,8 +39,9 @@ print('Done!')
 #         for param in module.parameters():
 #             param.requires_grad = False
 # print('Done!')
-
-criterion = nn.CrossEntropyLoss().cuda()
+class_weights = [514/109, 1, 514/106, 514/447]
+class_weights = torch.FloatTensor(class_weights).to(device)
+criterion = nn.CrossEntropyLoss(weight=class_weights).cuda()
 optimizer = optim.Adam(model.parameters(), lr=0.0001)
 random_transforms = [transforms.ColorJitter(brightness=0.2, contrast=0.3, saturation=0.3, hue=0.1),
                     transforms.RandomRotation(45)
@@ -58,19 +61,20 @@ transform = transforms.Compose([
         
     ]
 )
-dataset = EthnicityDataset('../data/dataset.csv', transform=transform)
+dataset = EthnicityDataset('./dataset_v2.csv', transform=transform)
 
 batch_size = 8
 
-train_set, validation_set = torch.utils.data.random_split(dataset, [965, 242])
-train_data_loader = torch.utils.data.DataLoader(train_set, 
+# train_set, validation_set = torch.utils.data.random_split(dataset, [941, 236])
+train_data_loader = torch.utils.data.DataLoader(dataset, 
             batch_size=batch_size, 
             shuffle=True, drop_last=True)
-test_data_loader = torch.utils.data.DataLoader(validation_set, 
-            batch_size=batch_size, 
-            shuffle=True, drop_last=True)
+# test_data_loader = torch.utils.data.DataLoader(validation_set, 
+#             batch_size=batch_size, 
+#             shuffle=True, drop_last=True)
 
-device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+
+
 model.to(device)
 print("Done!")
 
@@ -112,7 +116,7 @@ try:
             print(f"Epoch {e} Iteration {i} Loss: {running_loss} \t Batch accuracy: {batch_accuracy}")
             running_loss = 0.0
 
-        torch.save(model, f'../models/squeezenet__1_1__4_classes_ epoch_{e}__{int(time.time())}.pth')
+        torch.save(model, f'../models/squeezenet__1_1__4_classes_epoch_{e}__{int(time.time())}_new_dataset.pth')
         print(f"Saved model at epoch {e}")
 # except Exception as e :
 #     torch.save(model, 'squeezenet__1_1__4_classes_shit_happenend.pth')
@@ -124,24 +128,24 @@ except KeyboardInterrupt:
 print("Done training!")
 print("Starting testing....")
 
-acc_list = []
-with torch.no_grad():
-    for i, batch in tqdm(enumerate(test_data_loader)):
-        img = batch['image']
-        labels = batch['label']
+# acc_list = []
+# with torch.no_grad():
+#     for i, batch in tqdm(enumerate(test_data_loader)):
+#         img = batch['image']
+#         labels = batch['label']
 
-        img = img.to(device)
-        labels = (torch.Tensor(labels.float())).cuda()
+#         img = img.to(device)
+#         labels = (torch.Tensor(labels.float())).cuda()
 
-        outputs = model(img)
-        outputs = outputs.cpu()
-        labels = labels.cpu()
+#         outputs = model(img)
+#         outputs = outputs.cpu()
+#         labels = labels.cpu()
 
-        acc = accuracy(outputs, labels)
-        acc_list.append(acc)
-        print(f"Batch {i} accuracy: {acc} %")
+#         acc = accuracy(outputs, labels)
+#         acc_list.append(acc)
+#         print(f"Batch {i} accuracy: {acc} %")
 
-print(f"Test accuracy: {np.mean(acc_list)}")
+# print(f"Test accuracy: {np.mean(acc_list)}")
 
 
 
