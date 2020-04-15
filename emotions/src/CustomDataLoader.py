@@ -20,9 +20,8 @@ def to_img(data):
     return converted_data
 
 class DataLoaderFacesICML2013(Dataset):
-    def __init__(self, csv_file_path, root_dir, transform=None):
+    def __init__(self, csv_file_path, transform=None):
         self.faces_frame = pd.read_csv(csv_file_path)
-        self.root_dir = root_dir
         self.transform = transform
     
     def __len__(self):
@@ -31,7 +30,7 @@ class DataLoaderFacesICML2013(Dataset):
     def __getitem__(self, idx):
         if torch.is_tensor(idx):
             idx = idx.tolist()
-        img = to_img(self.faces_frame.iloc[idx, 1])
+        img = to_img(self.faces_frame.iloc[idx, 1].split(' '))
         label = to_categorical(self.faces_frame.iloc[idx, 0], 7)
         sample = {'image':img, 'label':label}
 
