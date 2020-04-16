@@ -34,9 +34,7 @@ class BaseCNN(nn.Module):
         return classifier_output
 
 class nVGGCNN(nn.Module):
-    """
-        nVGG: novel-VGG (novel, because of the Mish activation function, original VGG uses ReLU)
-    """
+
     def __init__(self, classes):
         super(nVGGCNN, self).__init__()
         self.classes = classes
