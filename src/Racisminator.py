@@ -6,17 +6,9 @@ import pyttsx3
 import os
 import torch
 from src.facial_landmarks import init_facial_landmarks_detector, detect_landmarks
-from tkinter import filedialog
+from tkinter import filedialog, PhotoImage, Label
 from threading import Thread
 from torchvision import transforms
-
-transform = transforms.Compose([
-            transforms.ToPILImage(),
-            transforms.ToTensor(),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-        ])
-device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-init_facial_landmarks_detector()
 
 
 class App:
@@ -44,8 +36,7 @@ class App:
         self.filelist = []
         self.get_filelist()
 
-        self.load_img_list_btn = tkinter.Button(self.window, text='Load Selected Image',
-                                                command=self.load_selected_image)
+        self.load_img_list_btn = tkinter.Button(self.window, text='Load Selected Image', command=self.load_selected_image)
         self.pack_place_obj(self.load_img_list_btn, height=25, width=150, x=15, y=375)
 
         self.load_directory_list_btn = tkinter.Button(self.window, text='Change dir', command=self.load_directory)
@@ -57,7 +48,7 @@ class App:
         self.load_img_btn = tkinter.Button(self.window, text='Load Image', command=self.open_img)
         self.pack_place_obj(self.load_img_btn, height=25, width=100, x=632, y=15)
 
-        self.load_video_btn = tkinter.Button(self.window, text='Capture Video', command=self.capture_video)
+        self.load_video_btn = tkinter.Button(self.window, text='Video', command=self.capture_video)
         self.pack_place_obj(self.load_video_btn, height=25, width=100, x=800, y=15)
 
         self.what_am_i_btn = tkinter.Button(self.window, text='What am I?', command=self.what_am_i)
@@ -125,6 +116,7 @@ class App:
         return
 
     def capture_video(self):
+
         self.show_btn(self.btn_snapshot, height=25, width=100, x=712, y=830)
         self.show_btn(self.what_am_i_btn, height=25, width=100, x=600, y=830)
         self.canvas.delete("all")
@@ -211,6 +203,14 @@ class MyLoadImg:
 
 
 if __name__ == "__main__":
+    transform = transforms.Compose([
+        transforms.ToPILImage(),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+    ])
+    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+    init_facial_landmarks_detector()
+
     # Create a window and pass it to the Application object
     MyApp = App(tkinter.Tk(), "Racisminator")
     cv2.destroyAllWindows()
