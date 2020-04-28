@@ -3,6 +3,8 @@ import torch.nn as nn
 import torchtools
 import torchvision.models as models
 
+import torchvision.transforms as transforms
+
 def get_resnet18(num_classes):
     new_layers = nn.Sequential(
         nn.Linear(1000, 256),
@@ -22,3 +24,21 @@ def get_squeezenet(num_classes):
         nn.AvgPool2d(13)
     )
     return backbone
+
+def get_prediction(network, input_data, device):
+    transform = transforms.Compose([
+        transforms.ToPILImage(),
+        transforms.Grayscale(num_output_channels=3),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),  
+        ]
+    )
+    face_tensor = transform(input_data)
+    face_tensor = face_tensor.view(1, 3,256,256).float().to(device)
+    with torch.no_grad():
+        result = network(face_tensor).float()
+        result.to('cpu')
+
+    return result
+
+
