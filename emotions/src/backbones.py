@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 import torchlayers as layers
 
 class Fire(nn.Module):
@@ -26,8 +27,9 @@ class Fire(nn.Module):
 
 class SqueezeNet(nn.Module):
 
-    def __init__(self):
+    def __init__(self, num_classes):
         super(SqueezeNet, self).__init__()
+        self.classes = num_classes
         self.features = nn.Sequential(
                 nn.Conv2d(3, 64, kernel_size=3, stride=2),
                 nn.ReLU(inplace=True),
@@ -43,6 +45,15 @@ class SqueezeNet(nn.Module):
                 Fire(384, 64, 256, 256),
                 Fire(512, 64, 256, 256),
             )
+        self.classifier = nn.Sequential(
+                nn.Dropout(p=0.5),
+                nn.Conv2d(512, self.classes, kernel_size=1),
+                nn.ReLU(),
+                nn.AdaptiveAvgPool2d((1, 1))
+            )
     
-    def forward(self, input_data):
-        return self.features(input_data)
+    
+    def forward(self, x):
+        x = self.features(x)
+        x = self.classifier(x)
+        return torch.flatten(x, 1)
