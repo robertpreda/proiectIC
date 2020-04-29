@@ -2,8 +2,9 @@ import torch
 import torch.nn as nn
 import torchtools
 import torchvision.models as models
-
 import torchvision.transforms as transforms
+
+from torch.nn.functional import softmax
 
 def get_resnet18(num_classes):
     new_layers = nn.Sequential(
@@ -39,6 +40,6 @@ def get_prediction(network, input_data, device):
         result = network(face_tensor).float()
         result.to('cpu')
 
-    return result
+    return softmax(result)
 
 
