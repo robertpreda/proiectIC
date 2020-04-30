@@ -66,6 +66,11 @@ class MainWindow(QMainWindow):
         photo_action.triggered.connect(self.start_timer)
         camera_toolbar.addAction(photo_action)
 
+        photo_action = QAction(QIcon(os.path.join('../Resources/', 'chart-icon.jpg')), "Emotions...",  self)  # See emotions chart
+        photo_action.setStatusTip("See emotions chart.")
+        photo_action.triggered.connect(self.show_graph)
+        camera_toolbar.addAction(photo_action)
+
         # Create the worker Thread
         self.timer = QTimer()
         self.timer.setInterval(25)
@@ -74,7 +79,10 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("NSAViewer")
         self.show()
 
-    def show_image(self):
+    def show_graph(self):
+        return
+
+    def show_image(self):  # Load image from system
         filename = QFileDialog.getOpenFileName(self, 'Open file', '../Snapshots/', "Image files (*.jpg *.gif)")
         if filename[0] == "":  # Break from function if nothing is selected
             return
@@ -96,7 +104,7 @@ class MainWindow(QMainWindow):
         self.image_frame.show()
         self.setCentralWidget(self.image_frame)
 
-    def take_photo(self):
+    def take_photo(self):  # Snapshot
         if self.currently_shown != "video":
             return
         timestamp = time.strftime("%d-%b-%Y-%H_%M_%S")
@@ -104,15 +112,7 @@ class MainWindow(QMainWindow):
         cv2.imwrite(f"{self.save_path}{self.current_camera_name}-{self.save_seq}-{timestamp}.jpg", snapshot)
         self.save_seq += 1
 
-    def start_video(self):
-        self.viewfinder = QCameraViewfinder()
-        if self.currently_shown == "image":
-            self.image_frame.hide()
-            self.viewfinder.show()
-        self.setCentralWidget(self.viewfinder)
-        self.select_camera(0)
-
-    def start_timer(self):
+    def start_timer(self):  # Start live video timer
         if self.currently_shown == "image":
             self.image_frame.hide()
 
@@ -122,10 +122,10 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(self.label)
         self.timer.start()
 
-    def stop_timer(self):
+    def stop_timer(self):  # Stop live video timer
         self.timer.stop()
 
-    def draw_camera(self):
+    def draw_camera(self):  # Live video
         b, frame = self.camera.read()
         img_resized = cv2.resize(frame, (1024, 768))
         modif_img = detect_landmarks(img_resized)
@@ -134,19 +134,27 @@ class MainWindow(QMainWindow):
         pix = QtGui.QPixmap(qImg)
         self.label.setPixmap(pix)
 
-    def closeEvent(self, event):
+    def closeEvent(self, event):  # Event for closing video
         self.stop_timer()
         return QWidget.closeEvent(self, event)
 
-    def change_folder(self):
+    def change_folder(self):  # Change snapshot saving location
         path = QFileDialog.getExistingDirectory(self, "Snapshot save location", "")
         if path:
             self.save_path = path
             self.save_seq = 0
 
-    def alert(self, s):
+    def alert(self, s):  # Error handling
         err = QErrorMessage(self)
         err.showMessage(s)
+
+    def start_video(self):  # Not used
+        self.viewfinder = QCameraViewfinder()
+        if self.currently_shown == "image":
+            self.image_frame.hide()
+            self.viewfinder.show()
+        self.setCentralWidget(self.viewfinder)
+        self.select_camera(0)
 
     def select_camera(self, i):  # Not used
         self.currently_shown = "video"
