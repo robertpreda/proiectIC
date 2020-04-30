@@ -27,32 +27,32 @@ class EmotionsWindow(QMainWindow):
         self.current_folder_size = 0
         self.current_emotion = "None"
 
-        photo_action = QAction(QIcon(os.path.join('../Resources/', 'happy-icon.png')), "Happy...", self)  # Display happy emotions
+        photo_action = QAction(QIcon(os.path.join('../Resources/Icons/', 'happy-icon.png')), "Happy...", self)  # Display happy emotions
         photo_action.setStatusTip("Happy emotion")
         photo_action.triggered.connect(self.show_happy)
         self.toolbar.addAction(photo_action)
 
-        photo_action = QAction(QIcon(os.path.join('../Resources/', 'sad-icon.png')), "Sad...", self)  # Display happy emotions
+        photo_action = QAction(QIcon(os.path.join('../Resources/Icons/', 'sad-icon.png')), "Sad...", self)  # Display happy emotions
         photo_action.setStatusTip("Sad emotion")
         photo_action.triggered.connect(self.show_sad)
         self.toolbar.addAction(photo_action)
 
-        photo_action = QAction(QIcon(os.path.join('../Resources/', 'disgust-icon.png')), "Disgust...", self)  # Display happy emotions
+        photo_action = QAction(QIcon(os.path.join('../Resources/Icons/', 'disgust-icon.png')), "Disgust...", self)  # Display happy emotions
         photo_action.setStatusTip("Disgust emotion")
         photo_action.triggered.connect(self.show_disgust)
         self.toolbar.addAction(photo_action)
 
-        photo_action = QAction(QIcon(os.path.join('../Resources/', 'fear-icon.png')), "Fear...", self)  # Display happy emotions
+        photo_action = QAction(QIcon(os.path.join('../Resources/Icons/', 'fear-icon.png')), "Fear...", self)  # Display happy emotions
         photo_action.setStatusTip("Fear emotion")
         photo_action.triggered.connect(self.show_fear)
         self.toolbar.addAction(photo_action)
 
-        photo_action = QAction(QIcon(os.path.join('../Resources/', 'left-arrow.png')), "Previous image...", self)  # See emotions example
+        photo_action = QAction(QIcon(os.path.join('../Resources/Icons/', 'left-arrow-icon.png')), "Previous image...", self)  # See emotions example
         photo_action.setStatusTip("Previous")
         photo_action.triggered.connect(self.previous_image)
         self.toolbar.addAction(photo_action)
 
-        photo_action = QAction(QIcon(os.path.join('../Resources/', 'right-arrow.png')), "Next image...",   self)  # See emotions example
+        photo_action = QAction(QIcon(os.path.join('../Resources/Icons/', 'right-arrow-icon.png')), "Next image...",   self)  # See emotions example
         photo_action.setStatusTip("Next")
         photo_action.triggered.connect(self.next_image)
         self.toolbar.addAction(photo_action)
