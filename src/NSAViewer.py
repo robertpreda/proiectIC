@@ -8,6 +8,7 @@ from PyQt5 import QtGui
 
 import torch
 from torchvision import transforms
+from src.EmotionsWindow import EmotionsWindow
 from src.facial_landmarks import init_facial_landmarks_detector, detect_landmarks
 
 import cv2
@@ -66,9 +67,14 @@ class MainWindow(QMainWindow):
         photo_action.triggered.connect(self.start_timer)
         camera_toolbar.addAction(photo_action)
 
-        photo_action = QAction(QIcon(os.path.join('../Resources/', 'chart-icon.jpg')), "Emotions...",  self)  # See emotions chart
+        photo_action = QAction(QIcon(os.path.join('../Resources/', 'chart-icon.jpg')), "Emotions...", self)  # See emotions chart
         photo_action.setStatusTip("See emotions chart.")
         photo_action.triggered.connect(self.show_graph)
+        camera_toolbar.addAction(photo_action)
+
+        photo_action = QAction(QIcon(os.path.join('../Resources/', 'emotions-icon.jpg')), "Emotions example...", self)  # See emotions example
+        photo_action.setStatusTip("See emotions example.")
+        photo_action.triggered.connect(self.open_emotions_window)
         camera_toolbar.addAction(photo_action)
 
         # Create the worker Thread
@@ -78,6 +84,11 @@ class MainWindow(QMainWindow):
 
         self.setWindowTitle("NSAViewer")
         self.show()
+
+    def open_emotions_window(self):
+        self.emotions_window = EmotionsWindow()
+        self.emotions_window.show()
+        return
 
     def show_graph(self):
         return
