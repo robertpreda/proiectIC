@@ -41,13 +41,14 @@ def detect_landmarks(image_inp):
 		# print(f"Difference between 46 and 43 in y is {shape[46][1] - shape[43][1]}")
 		# print(f"Difference between 47 and 44 in y is {shape[47][1] - shape[44][1]}")
 		med = (shape[40][1] - shape[37][1] + shape[41][1] - shape[38][1] + shape[46][1] - shape[43][1] + shape[47][1] - shape[44][1])/4
-		# print("Med is: ", med)
-		if med > 8:
+		(x, y, w, h) = rect_to_bb(rect)
+		percentage = round((100*med)/h, 2)
+
+		if percentage > 4:
 			eyes = "Eyes opened"
 		else:
 			eyes = "Eyes closed"
 
-		(x, y, w, h) = rect_to_bb(rect)
 		cv2.rectangle(img_modif, (x, y), (x + w, y + h), (0, 255, 0), 2)
 
 		cv2.putText(img_modif, f"Face #{i + 1} -- {eyes}", (x - 10, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
