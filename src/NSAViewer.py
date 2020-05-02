@@ -9,7 +9,7 @@ from PyQt5 import QtGui
 import torch
 from torchvision import transforms
 from src.EmotionsWindow import EmotionsWindow
-from src.facial_landmarks import init_facial_landmarks_detector, detect_landmarks
+from src.facial_landmarks import init_facial_landmarks_detector, init_emotions_detector, detect_landmarks
 
 import cv2
 import os
@@ -191,8 +191,8 @@ if __name__ == '__main__':
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     ])
-    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     init_facial_landmarks_detector()
+    init_emotions_detector()
 
     app = QApplication(sys.argv)
     app.setApplicationName("NSAViewer")
