@@ -35,7 +35,7 @@ def get_prediction(network, input_data, device):
         ]
     )
     face_tensor = transform(input_data)
-    face_tensor = face_tensor.view(1, 3,256,256).float().to(device)
+    face_tensor = face_tensor.view(1, 3, 512, 512).float().to(device)
     with torch.no_grad():
         result = network(face_tensor).float()
         result.to('cpu')

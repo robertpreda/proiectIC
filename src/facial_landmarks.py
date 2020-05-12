@@ -51,10 +51,10 @@ def detect_landmarks(image_inp):
 			eyes = "Eyes closed"
 
 		face = img_modif[y:y+h, x:x+w]
-		face = cv2.resize(face, (256, 256))
+		face = cv2.resize(face, (512, 512))
 		result = get_prediction(net, face, device).cpu()
 		emotion = emotions[int(torch.argmax(result))]
-		confidence = round(result.numpy()[0][int(torch.argmax(result))]*100,2)
+		confidence = round(result.numpy()[0][int(torch.argmax(result))]*100, 2)
 		# print(emotion, confidence)
 
 		cv2.rectangle(img_modif, (x, y), (x + w, y + h), (0, 255, 0), 2)
@@ -79,7 +79,7 @@ def init_facial_landmarks_detector():
 
 def init_emotions_detector():
 	global net, emotions
-	net = torch.load("../models/squeeze__epochs_100.pth")
+	net = torch.load("../models/squeezenet_512x512__epochs_200.pth")
 	emotions = {
 		0: 'Neutral',
 		1: 'Happy',
