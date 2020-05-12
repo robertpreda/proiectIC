@@ -1,11 +1,8 @@
-from PyQt5.QtGui import *
-from PyQt5.QtWidgets import *
-from PyQt5.QtCore import *
-from PyQt5.QtPrintSupport import *
-from PyQt5.QtMultimedia import *
-from PyQt5.QtMultimediaWidgets import *
-from PyQt5 import QtGui
+from PyQt5.QtGui import QIcon, QPixmap, QImage
+from PyQt5.QtWidgets import QMainWindow, QStatusBar, QToolBar, QLabel, QAction, QWidget, QSizePolicy
+from PyQt5.QtCore import QSize
 
+from src.utils import resource_path
 import os
 import cv2
 
@@ -27,37 +24,37 @@ class EmotionsWindow(QMainWindow):
         self.current_folder_size = 0
         self.current_emotion = "None"
 
-        photo_action = QAction(QIcon(os.path.join('../Resources/Icons/', 'neutral-icon.png')), "Neutral...", self)  # Display happy emotions
+        photo_action = QAction(QIcon(resource_path('../Resources/Icons/neutral-icon.png')), "Neutral...", self)  # Display happy emotions
         photo_action.setStatusTip("Neutral emotion")
         photo_action.triggered.connect(self.show_neutral)
         self.toolbar.addAction(photo_action)
 
-        photo_action = QAction(QIcon(os.path.join('../Resources/Icons/', 'happy-icon.png')), "Happy...", self)  # Display happy emotions
+        photo_action = QAction(QIcon(resource_path('../Resources/Icons/happy-icon.png')), "Happy...", self)  # Display happy emotions
         photo_action.setStatusTip("Happy emotion")
         photo_action.triggered.connect(self.show_happy)
         self.toolbar.addAction(photo_action)
 
-        photo_action = QAction(QIcon(os.path.join('../Resources/Icons/', 'surprise-icon.png')), "Surprise...", self)  # Display happy emotions
+        photo_action = QAction(QIcon(resource_path('../Resources/Icons/surprise-icon.png')), "Surprise...", self)  # Display happy emotions
         photo_action.setStatusTip("Surprise emotion")
         photo_action.triggered.connect(self.show_surprise)
         self.toolbar.addAction(photo_action)
 
-        photo_action = QAction(QIcon(os.path.join('../Resources/Icons/', 'sad-icon.png')), "Sad...", self)  # Display happy emotions
+        photo_action = QAction(QIcon(resource_path('../Resources/Icons/sad-icon.png')), "Sad...", self)  # Display happy emotions
         photo_action.setStatusTip("Sad emotion")
         photo_action.triggered.connect(self.show_sad)
         self.toolbar.addAction(photo_action)
 
-        photo_action = QAction(QIcon(os.path.join('../Resources/Icons/', 'disgust-icon.png')), "Disgust...", self)  # Display happy emotions
+        photo_action = QAction(QIcon(resource_path('../Resources/Icons/disgust-icon.png')), "Disgust...", self)  # Display happy emotions
         photo_action.setStatusTip("Disgust emotion")
         photo_action.triggered.connect(self.show_disgust)
         self.toolbar.addAction(photo_action)
 
-        photo_action = QAction(QIcon(os.path.join('../Resources/Icons/', 'fear-icon.png')), "Fear...", self)  # Display happy emotions
+        photo_action = QAction(QIcon(resource_path('../Resources/Icons/fear-icon.png')), "Fear...", self)  # Display happy emotions
         photo_action.setStatusTip("Fear emotion")
         photo_action.triggered.connect(self.show_fear)
         self.toolbar.addAction(photo_action)
 
-        photo_action = QAction(QIcon(os.path.join('../Resources/Icons/', 'angry-icon.png')), "Angry...", self)  # Display happy emotions
+        photo_action = QAction(QIcon(resource_path('../Resources/Icons/angry-icon.png')), "Angry...", self)  # Display happy emotions
         photo_action.setStatusTip("Angry emotion")
         photo_action.triggered.connect(self.show_angry)
         self.toolbar.addAction(photo_action)
@@ -66,12 +63,12 @@ class EmotionsWindow(QMainWindow):
         self.spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.toolbar.addWidget(self.spacer)
 
-        photo_action = QAction(QIcon(os.path.join('../Resources/Icons/', 'left-arrow-icon.png')), "Previous image...", self)  # See emotions example
+        photo_action = QAction(QIcon(resource_path('../Resources/Icons/left-arrow-icon.png')), "Previous image...", self)  # See emotions example
         photo_action.setStatusTip("Previous")
         photo_action.triggered.connect(self.previous_image)
         self.toolbar.addAction(photo_action)
 
-        photo_action = QAction(QIcon(os.path.join('../Resources/Icons/', 'right-arrow-icon.png')), "Next image...",   self)  # See emotions example
+        photo_action = QAction(QIcon(resource_path('../Resources/Icons/right-arrow-icon.png')), "Next image...",   self)  # See emotions example
         photo_action.setStatusTip("Next")
         photo_action.triggered.connect(self.next_image)
         self.toolbar.addAction(photo_action)
@@ -93,13 +90,13 @@ class EmotionsWindow(QMainWindow):
             self.show_emotions(self.current_emotion)
 
     def show_emotions(self, emotion):
-        imagesList = os.listdir(f"../Resources/{emotion}/")
+        imagesList = os.listdir(resource_path(f"../Resources/{emotion}/"))
 
-        cv_img = cv2.imread(f"../Resources/{emotion}/{imagesList[self.current_picture_number]}")
+        cv_img = cv2.imread(resource_path(f"../Resources/{emotion}/{imagesList[self.current_picture_number]}"))
         img_resized = cv2.resize(cv_img, (800, 600))
 
-        self.image = QtGui.QImage(img_resized.data, img_resized.shape[1], img_resized.shape[0], QtGui.QImage.Format_RGB888).rgbSwapped()
-        self.image_frame.setPixmap(QtGui.QPixmap.fromImage(self.image))
+        self.image = QImage(img_resized.data, img_resized.shape[1], img_resized.shape[0], QImage.Format_RGB888).rgbSwapped()
+        self.image_frame.setPixmap(QPixmap.fromImage(self.image))
 
         self.image_frame.show()
         self.setCentralWidget(self.image_frame)
@@ -108,7 +105,7 @@ class EmotionsWindow(QMainWindow):
         if self.current_emotion != "Neutral":
             self.current_picture_number = 0
             self.current_emotion = "Neutral"
-            imagesList = os.listdir("../Resources/Neutral/")
+            imagesList = os.listdir(resource_path("../Resources/Neutral/"))
             self.current_folder_size = len(imagesList)
 
         self.show_emotions(self.current_emotion)
@@ -118,7 +115,7 @@ class EmotionsWindow(QMainWindow):
         if self.current_emotion != "Happy":
             self.current_picture_number = 0
             self.current_emotion = "Happy"
-            imagesList = os.listdir("../Resources/Happy/")
+            imagesList = os.listdir(resource_path("../Resources/Happy/"))
             self.current_folder_size = len(imagesList)
 
         self.show_emotions(self.current_emotion)
@@ -128,7 +125,7 @@ class EmotionsWindow(QMainWindow):
         if self.current_emotion != "Surprise":
             self.current_picture_number = 0
             self.current_emotion = "Surprise"
-            imagesList = os.listdir("../Resources/Surprise/")
+            imagesList = os.listdir(resource_path("../Resources/Surprise/"))
             self.current_folder_size = len(imagesList)
 
         self.show_emotions(self.current_emotion)
@@ -138,7 +135,7 @@ class EmotionsWindow(QMainWindow):
         if self.current_emotion != "Sad":
             self.current_picture_number = 0
             self.current_emotion = "Sad"
-            imagesList = os.listdir("../Resources/Sad/")
+            imagesList = os.listdir(resource_path("../Resources/Sad/"))
             self.current_folder_size = len(imagesList)
 
         self.show_emotions(self.current_emotion)
@@ -148,7 +145,7 @@ class EmotionsWindow(QMainWindow):
         if self.current_emotion != "Disgust":
             self.current_picture_number = 0
             self.current_emotion = "Disgust"
-            imagesList = os.listdir("../Resources/Disgust/")
+            imagesList = os.listdir(resource_path("../Resources/Disgust/"))
             self.current_folder_size = len(imagesList)
 
         self.show_emotions(self.current_emotion)
@@ -158,7 +155,7 @@ class EmotionsWindow(QMainWindow):
         if self.current_emotion != "Fear":
             self.current_picture_number = 0
             self.current_emotion = "Fear"
-            imagesList = os.listdir("../Resources/Fear/")
+            imagesList = os.listdir(resource_path("../Resources/Fear/"))
             self.current_folder_size = len(imagesList)
 
         self.show_emotions(self.current_emotion)
@@ -168,7 +165,7 @@ class EmotionsWindow(QMainWindow):
         if self.current_emotion != "Angry":
             self.current_picture_number = 0
             self.current_emotion = "Angry"
-            imagesList = os.listdir("../Resources/Angry/")
+            imagesList = os.listdir(resource_path("../Resources/Angry/"))
             self.current_folder_size = len(imagesList)
 
         self.show_emotions(self.current_emotion)

@@ -45,13 +45,14 @@ def detect_landmarks(image_inp):
 		med = (shape[40][1] - shape[37][1] + shape[41][1] - shape[38][1] + shape[46][1] - shape[43][1] + shape[47][1] - shape[44][1])/4
 		(x, y, w, h) = rect_to_bb(rect)
 		percentage = round((100*med)/h, 2)
-		if percentage > 4:
+		if percentage > 4.25:
 			eyes = "Eyes opened"
 		else:
 			eyes = "Eyes closed"
 
 		face = img_modif[y:y+h, x:x+w]
 		face = cv2.resize(face, (512, 512))
+		# torch.manual_seed(2)
 		result = get_prediction(net, face, device).cpu()
 		emotion = emotions[int(torch.argmax(result))]
 		confidence = round(result.numpy()[0][int(torch.argmax(result))]*100, 2)

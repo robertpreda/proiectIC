@@ -1,10 +1,20 @@
 import torch
 import torch.nn as nn
-import torchtools
 import torchvision.models as models
 import torchvision.transforms as transforms
 
 from torch.nn.functional import softmax
+import sys
+import os
+
+def resource_path(relative_path):
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
 
 def get_resnet18(num_classes):
     new_layers = nn.Sequential(
